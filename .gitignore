@@ -1,0 +1,16 @@
+bin/
+obj/
+Properties/
+sql/
+.vs/
+.vscode/
+.svn/
+DataSource.config
+build.log
+changelog*.txt
+*.userprefs
+*.csproj.user
+*.config
+*.sh
+*.user
+
