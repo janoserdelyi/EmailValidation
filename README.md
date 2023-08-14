@@ -17,6 +17,8 @@ var chainedValidationExample = Email.Validator (" FOO ")
 	.ValidateFormat ()
 	.Parse ()
 	.DisallowTld ("edu")
+	// .DisallowDomains (new List<string> { "foo.bar", "bar.baz" }) // don't use both this and AllowDomains together. This turns the whole thing into a blocklist
+	// .AllowDomains (new List<string> { "bread.com" }) // this turns the whole check into an allowlist of the only domains allowed in
 	.LocalIsValid ()
 	.CommonTypos ()
 	.Rank ()
