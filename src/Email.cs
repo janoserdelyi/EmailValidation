@@ -146,7 +146,9 @@ public class Email
 		};
 	}
 
-	public static bool LocalPartIsValid (string local) {
+	public static bool LocalPartIsValid (
+		string local
+	) {
 		if (string.IsNullOrEmpty (local)) {
 			return false;
 		}
@@ -400,14 +402,77 @@ public static class EmailValidationExtensions
 		// i know TLD's are a freaking mess. i'm just using the old original version - the type where the content is after the last dot of the domain not this double-dipping crap like .co.uk!
 		string tld = result.Value.Domain.Substring (result.Value.Domain.LastIndexOf ('.') + 1);
 
-		if (tldToBlock.StartsWith ('.')) {
-			tldToBlock = tldToBlock.Substring (1);
-		}
+		//if (tldToBlock.StartsWith ('.')) {
+		//	tldToBlock = tldToBlock.Substring (1);
+		//}
 
 		tldToBlock = tldToBlock.ToLower ().Trim ();
 
-		if (tld == tldToBlock) {
-			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tld}' is not an allowed TLD");
+		//if (tld == tldToBlock) {
+		//	return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tld}' is not an allowed TLD");
+		//}
+
+		// reworking this to account for multi-segment tld's
+		// structurally i don't care do it, but it's up tot he developer's discretion to use/abuse this
+
+		if (result.Value.Domain.EndsWith (tldToBlock)) {
+			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tldToBlock}' is not an allowed TLD");
+		}
+
+		return Result<Email>.Success<Email> (result.Value);
+	}
+
+	// blocklist approach
+	public static Result<Email> DisallowDomains (
+		this Result<Email> result,
+		ICollection<string> domainsToBlock
+	) {
+		if (result.IsFailure == true) {
+			return result;
+		}
+
+		if (result.Value == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot check common typos");
+		}
+
+		if (result.Value.Domain == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check common typos");
+		}
+
+		if (domainsToBlock == null || domainsToBlock.Count == 0) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domains disallowed. Not list provided");
+		}
+
+		if (domainsToBlock.Contains (result.Value.Domain)) {
+			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{result.Value.Domain}' is not an allowed domain");
+		}
+
+		return Result<Email>.Success<Email> (result.Value);
+	}
+
+	// allowlist approach. only allow these through
+	public static Result<Email> AllowDomains (
+		this Result<Email> result,
+		ICollection<string> domainsToAllow
+	) {
+		if (result.IsFailure == true) {
+			return result;
+		}
+
+		if (result.Value == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot check common typos");
+		}
+
+		if (result.Value.Domain == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check common typos");
+		}
+
+		if (domainsToAllow == null || domainsToAllow.Count == 0) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domains disallowed. Not list provided");
+		}
+
+		if (!domainsToAllow.Contains (result.Value.Domain)) {
+			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{result.Value.Domain}' is not an allowed domain");
 		}
 
 		return Result<Email>.Success<Email> (result.Value);
