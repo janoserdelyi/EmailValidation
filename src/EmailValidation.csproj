@@ -8,7 +8,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../../Validation/src/Validation.csproj"/>
-		<ProjectReference Include="../../EmailRank/EmailRank.csproj"/>
 		<ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/>
 	</ItemGroup>
 </Project>

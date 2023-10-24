@@ -322,7 +322,11 @@ public static class EmailValidationExtensions
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot rank");
 		}
 
-		result.Value.StaticRank = EmailRank.Ranker.Test (result.Value.Address).Rank; // generally 10 and up is bad
+		if (result.Value.Address == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email address provided, cannot rank");
+		}
+
+		result.Value.StaticRank = Ranker.Test (result.Value.Address).Rank; // generally 10 and up is bad
 
 		return Result<Email>.Success<Email> (result.Value);
 	}
