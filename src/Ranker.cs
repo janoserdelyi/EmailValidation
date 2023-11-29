@@ -82,9 +82,7 @@ public static class Ranker
 
 		// i should probably do the same as above for non-alphanumeric characters
 
-
 		// any number sequence greater than 4 is suspicious. i see a lot of birthday years, graduation years, etc so 4 will be considered ok
-
 
 		// some common bogus inputs
 		// if this list grows i'll make a List<string> and test contains
