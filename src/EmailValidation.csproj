@@ -4,10 +4,34 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		<PackageId>com.janoserdelyi.EmailValidation</PackageId>
+		<Authors>Janos Erdelyi</Authors>
+		<Company>Janos Erdelyi</Company>
+		<Product>EmailValidation</Product>
+		<Description>Sanitize, Rank, and Validate email addresses</Description>
+		<Version>1.0.0</Version>
+		<AssemblyName>Validation</AssemblyName>
+		<!-- for packaging -->
+		<EnablePackageValidation>true</EnablePackageValidation>
+    	<!-- Optional: Detect breaking changes from a previous stable version -->
+    	<!-- <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion> -->
+		<!-- automatically generate package on build -->
+		<!-- <GeneratePackageOnBuild>true</GeneratePackageOnBuild> -->
+		<!-- <PackageLicenseExpression>AGPL</PackageLicenseExpression> -->
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../../Validation/src/Validation.csproj"/>
-		<ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/>
+		<None Include="../README.md" Pack="true" PackagePath="/"/>
+		<None Include="../LICENSE" Pack="true" PackagePath="/"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- <ProjectReference Include="../../Validation/src/Validation.csproj"/> -->
+		<!-- <ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/> -->
+		<PackageReference Include="com.janoserdelyi.Validation" Version="1.0.0"/>
+		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.2.0"/>
 	</ItemGroup>
 </Project>
