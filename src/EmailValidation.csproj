@@ -10,7 +10,7 @@
 		<Company>Janos Erdelyi</Company>
 		<Product>EmailValidation</Product>
 		<Description>Sanitize, Rank, and Validate email addresses</Description>
-		<Version>1.0.4</Version>
+		<Version>1.0.5</Version>
 		<AssemblyName>Validation</AssemblyName>
 		<RootNamespace>com.janoserdelyi.EmailValidation</RootNamespace>
 		<!-- for packaging -->
@@ -33,6 +33,6 @@
 		<!-- <ProjectReference Include="../../Validation/src/Validation.csproj"/> -->
 		<!-- <ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/> -->
 		<PackageReference Include="com.janoserdelyi.Validation" Version="1.0.4"/>
-		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.2.2"/>
+		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.2.3"/>
 	</ItemGroup>
 </Project>
