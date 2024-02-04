@@ -1,8 +1,10 @@
 
+using System.Linq;
+
 namespace com.janoserdelyi.EmailValidation;
 
 // 2017-11-16 first stab! not sure what i'm doing yet...
-public static class Ranker
+public class Ranker : IRanker
 {
 	// general ideas - 
 	//	high numbers are bad
@@ -11,7 +13,7 @@ public static class Ranker
 	// this can be used before or after more extended checks like looking against a database or dns lookups or telnet verification of a mx domain
 	// ideally before. this should be a quicker and less expensive operation (no networking involved being a biggie)
 
-	public static RankResponse Test (
+	public RankResponse Test (
 		string email
 	) {
 		const int MAX = 10;
@@ -192,7 +194,17 @@ public static class Ranker
 		return resp;
 	}
 
-	// copying some things from com.nestiny.common. i don't want deps on this
+	// add your own dictionary of unacceptable words
+	public static void AddBadWords (
+		List<string> wordList
+	) {
+		if (wordList != null && wordList.Count > 0) {
+			return;
+		}
+
+		wordList!.ForEach (el => badwords.Add (el));
+	}
+
 	public static string JustNumbers (string input) {
 		if (string.IsNullOrEmpty (input)) {
 			return input;
@@ -231,5 +243,5 @@ public static class Ranker
 		return badwords;
 	}
 
-	private static HashSet<string> badwords = new HashSet<string> ();
+	private static readonly HashSet<string> badwords = new ();
 }
