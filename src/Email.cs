@@ -50,7 +50,7 @@ public class Email
 			.LocalIsValid ()
 			.CommonTypos ()
 			.Rank ()
-			.VerifyMxRecords ();
+			.VerifyMxRecords ().Result;
 	}
 
 	public Result<Email> Validate (
@@ -128,7 +128,7 @@ public class Email
 	}
 
 	public static Email? ParseParts (
-		Email? email
+		Email email
 	) {
 		if (email == null) {
 			return null;
@@ -400,20 +400,13 @@ public static class EmailValidationExtensions
 		}
 
 		// i know TLD's are a freaking mess. i'm just using the old original version - the type where the content is after the last dot of the domain not this double-dipping crap like .co.uk!
-		string tld = result.Value.Domain.Substring (result.Value.Domain.LastIndexOf ('.') + 1);
-
-		//if (tldToBlock.StartsWith ('.')) {
-		//	tldToBlock = tldToBlock.Substring (1);
-		//}
+		//string tld = result.Value.Domain.Substring (result.Value.Domain.LastIndexOf ('.') + 1);
+		//string tld = result.Value.Domain[(result.Value.Domain.LastIndexOf ('.') + 1)..];
 
 		tldToBlock = tldToBlock.ToLower ().Trim ();
 
-		//if (tld == tldToBlock) {
-		//	return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tld}' is not an allowed TLD");
-		//}
-
 		// reworking this to account for multi-segment tld's
-		// structurally i don't care do it, but it's up tot he developer's discretion to use/abuse this
+		// structurally i don't care do it, but it's up to the developer's discretion to use/abuse this
 
 		if (result.Value.Domain.EndsWith (tldToBlock)) {
 			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tldToBlock}' is not an allowed TLD");
@@ -478,7 +471,7 @@ public static class EmailValidationExtensions
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
-	public static Result<Email> VerifyMxRecords (
+	public static async Task<Result<Email>> VerifyMxRecords (
 		this Result<Email> result,
 		MxConfig? config = null
 	) {
@@ -523,21 +516,24 @@ public static class EmailValidationExtensions
 			}
 		}
 
-		MailVerifier.Response r = null;
+		MailVerifier.Response r;
 		try {
-			r = MailVerifier.Verify.Check (result.Value.Address);
+			r = await MailVerifier.Verify.Check (result.Value.Address);
 		} catch (System.ArgumentNullException oops) {
-			r = new MailVerifier.Response ();
-			r.Success = false;
-			r.Message = oops.Message;
+			r = new MailVerifier.Response {
+				Success = false,
+				Message = oops.Message
+			};
 		} catch (System.ArgumentException oops) {
-			r = new MailVerifier.Response ();
-			r.Success = false;
-			r.Message = oops.Message;
+			r = new MailVerifier.Response {
+				Success = false,
+				Message = oops.Message
+			};
 		} catch (Exception oops) {
-			r = new MailVerifier.Response ();
-			r.Success = false;
-			r.Message = "Unknown exception. Record not added. " + oops.Message;
+			r = new MailVerifier.Response {
+				Success = false,
+				Message = "Unknown exception. Record not added. " + oops.Message
+			};
 		}
 
 		if (r.Success == false) {
@@ -550,7 +546,7 @@ public static class EmailValidationExtensions
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
-	private static System.Collections.Generic.IList<string> defaultDnsServers = new System.Collections.Generic.List<string> () { "208.67.222.222", "208.67.220.220", "1.1.1.1" };
-	private static System.Collections.Generic.IList<string> defaultBypassDomains = new System.Collections.Generic.List<string> () { "messytheface.com", "gmail.com", "yahoo.com", "live.com", "outlook.com", "aol.com" };
+	private static readonly System.Collections.Generic.IList<string> defaultDnsServers = new System.Collections.Generic.List<string> () { "208.67.222.222", "208.67.220.220", "1.1.1.1" };
+	private static readonly System.Collections.Generic.IList<string> defaultBypassDomains = new System.Collections.Generic.List<string> () { "messytheface.com", "gmail.com", "yahoo.com", "live.com", "outlook.com", "aol.com" };
 
 }

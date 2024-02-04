@@ -138,7 +138,7 @@ public class EmailValidationTest
 		var val = Email.Validator (value).ValidateFormat ().Parse ().VerifyMxRecords (config: new MxConfig () {
 			DnsServers = new System.Collections.Generic.List<string> () { "1.1.1.1" },
 			BypassDomains = new System.Collections.Generic.List<string> () { "gmail.com", "yahoo.com", "aol.com" }
-		});
+		}).Result;
 
 		Assert.True (val.IsSuccess, $"'{value}'s domain has MX records");
 	}
