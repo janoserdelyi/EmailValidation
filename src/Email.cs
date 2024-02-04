@@ -312,7 +312,8 @@ public static class EmailValidationExtensions
 	}
 
 	public static Result<Email> Rank (
-		this Result<Email> result
+		this Result<Email> result,
+		IRanker? ranker = null // pass in your own if you want something different than the built-in
 	) {
 		if (result.IsFailure == true) {
 			return result;
@@ -326,13 +327,16 @@ public static class EmailValidationExtensions
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email address provided, cannot rank");
 		}
 
-		result.Value.StaticRank = Ranker.Test (result.Value.Address).Rank; // generally 10 and up is bad
+		ranker ??= new Ranker ();
+
+		result.Value.StaticRank = ranker.Test (result.Value.Address).Rank; // 10 and up is bad in the default ranker
 
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
 	public static Result<Email> CommonTypos (
-		this Result<Email> result
+		this Result<Email> result,
+		Dictionary<string, TypoMatch>? typoMatches = null // the dictionary key is the typo you're concerned about.much quicker lookup
 	) {
 		if (result.IsFailure == true) {
 			return result;
@@ -353,35 +357,27 @@ public static class EmailValidationExtensions
 		string local = result.Value.LocalPart;
 		string domain = result.Value.Domain;
 
-		if (domain == "gmial.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is a squatter domain. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "gamil.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "gmaul.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "gnail.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "gmai.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "gmsil.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@gmail.com'?");
-		}
-		if (domain == "ail.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is a squatter domain. Did you mean '{local}@aol.com'?");
-		}
-		if (domain == "hitnail.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@hotmail.com'?");
-		}
-		if (domain == "hitmail.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@hotmail.com'?");
-		}
-		if (domain == "hotnail.com") {
-			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, $"'{domain}' is usually a typo. Did you mean '{local}@hotmail.com'?");
+		// load a default set
+		typoMatches ??= new Dictionary<string, TypoMatch> () {
+			["gmial.com"] = new TypoMatch ("gmial.com", "gmail.com", "'{typodomain}' is a squatter domain. Did you mean '{local}@{domain}'?"),
+			["gamil.com"] = new TypoMatch ("gamil.com", "gmail.com"),
+			["gmaul.com"] = new TypoMatch ("gmaul.com", "gmail.com"),
+			["gnail.com"] = new TypoMatch ("gnail.com", "gmail.com"),
+			["gmai.com"] = new TypoMatch ("gmai.com", "gmail.com"),
+			["gmsil.com"] = new TypoMatch ("gmsil.com", "gmail.com"),
+			["ail.com"] = new TypoMatch ("ail.com", "aol.com", "'{typodomain}' is a squatter domain. Did you mean '{local}@{domain}'?"),
+			["hitnail.com"] = new TypoMatch ("hitnail.com", "hotmail.com"),
+			["hitmail.com"] = new TypoMatch ("hitmail.com", "hotmail.com"),
+			["hotnail.com"] = new TypoMatch ("hotnail.com", "hotmail.com")
+		};
+
+		if (typoMatches.ContainsKey (domain)) {
+			string msg = typoMatches[domain].ResponseTemplate
+				.Replace ("{typodomain}", domain)
+				.Replace ("{domain}", typoMatches[domain].CorrectDomain)
+				.Replace ("{local}", local);
+
+			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, msg);
 		}
 
 		return Result<Email>.Success<Email> (result.Value);
