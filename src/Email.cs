@@ -1,7 +1,9 @@
 namespace com.janoserdelyi.EmailValidation;
 
 using System;
+using System.Runtime.CompilerServices;
 using com.janoserdelyi.Validation;
+using Microsoft.VisualBasic;
 
 // i want to test something like
 
@@ -470,6 +472,57 @@ public static class EmailValidationExtensions
 
 		return Result<Email>.Success<Email> (result.Value);
 	}
+
+	// download a list of temporary email service domains and block them. cache the list
+	public static async Task<Result<Email>> DisallowTemporaryServiceDomains (
+		this Result<Email> result,
+		TemporaryServiceConfig config
+	) {
+		if (result.IsFailure == true) {
+			return result;
+		}
+
+		if (result.Value == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot check against temporary services");
+		}
+
+		if (result.Value.Domain == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check against temporary services");
+		}
+
+		if (cachedTempDomains.Count == 0 || DateTime.Now > cacheTempDomainsUpdateDt) {
+			cachedTempDomains.Clear ();
+
+			var httpClient = new HttpClient ();
+			var request = new HttpRequestMessage (HttpMethod.Get, config.ListUrl);
+			var response = await httpClient.SendAsync (request);
+
+			if (response.IsSuccessStatusCode == false) {
+				return Result<Email>.Failure<Email> ((int)Error.Empty, $"Unable to load temporary services list - {response.StatusCode} : {response.ReasonPhrase}");
+			}
+
+			var content = await response.Content.ReadAsStringAsync ();
+
+			var lines = content.Split (lineSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+			// put into a dictionary for faster lookups
+			foreach (string line in lines) {
+				cachedTempDomains.Add (line.ToLower (), null);
+			}
+
+			cacheTempDomainsUpdateDt = DateTime.Now.AddHours (config.CacheHours);
+		}
+
+		if (cachedTempDomains.ContainsKey (result.Value.Domain)) {
+			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{result.Value.Domain}' is not an allowed domain");
+		}
+
+		return Result<Email>.Success<Email> (result.Value);
+	}
+
+	private static readonly char[] lineSeparator = new[] { '\r', '\n' };
+	private static readonly Dictionary<string, string?> cachedTempDomains = new ();
+	private static DateTime cacheTempDomainsUpdateDt = new DateTime (1970, 1, 1);
 
 	public static async Task<Result<Email>> VerifyMxRecords (
 		this Result<Email> result,
