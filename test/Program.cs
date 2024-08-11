@@ -192,7 +192,7 @@ using Xunit;
 public class Program
 {
 	public static void Main (
-		string[] args
+	//string[] args
 	) {
 
 		var tempServiceExample = Email.Validator ("a@losemymail.com").ValidateFormat ().Parse ().DisallowTemporaryServiceDomains (

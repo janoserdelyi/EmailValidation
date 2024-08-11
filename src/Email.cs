@@ -9,8 +9,7 @@ using Microsoft.VisualBasic;
 
 // var email = new Email("foo@bar.com").Lower().Trim().CheckFormat().Score().CheckMx();
 
-public class Email
-{
+public class Email {
 	public Email () {
 
 	}
@@ -166,8 +165,7 @@ public class Email
 
 }
 
-public static class EmailValidationExtensions
-{
+public static class EmailValidationExtensions {
 
 	public static Result<Email> ValidateFormat (
 		this Result<Email> result
