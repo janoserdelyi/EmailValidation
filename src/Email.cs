@@ -518,6 +518,29 @@ public static class EmailValidationExtensions {
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
+	public static async Task<Result<Email>> DisallowTemporaryServiceDomains (
+	  this Result<Email> result,
+	  List<string> temporaryDomains
+	) {
+		if (result.IsFailure == true) {
+			return result;
+		}
+
+		if (result.Value == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot check against temporary services");
+		}
+
+		if (result.Value.Domain == null) {
+			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check against temporary services");
+		}
+
+		if (temporaryDomains.Contains (result.Value.Domain)) {
+			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{result.Value.Domain}' is not an allowed domain");
+		}
+
+		return Result<Email>.Success<Email> (result.Value);
+	}
+
 	private static readonly char[] lineSeparator = new[] { '\r', '\n' };
 	private static readonly Dictionary<string, string?> cachedTempDomains = new ();
 	private static DateTime cacheTempDomainsUpdateDt = new DateTime (1970, 1, 1);

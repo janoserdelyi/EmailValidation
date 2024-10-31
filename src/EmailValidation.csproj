@@ -10,7 +10,7 @@
 		<Company>Janos Erdelyi</Company>
 		<Product>EmailValidation</Product>
 		<Description>Sanitize, Rank, and Validate email addresses</Description>
-		<Version>1.3.0</Version>
+		<Version>1.4.0</Version>
 		<AssemblyName>Validation</AssemblyName>
 		<RootNamespace>com.janoserdelyi.EmailValidation</RootNamespace>
 		<!-- for packaging -->
