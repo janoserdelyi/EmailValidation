@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -10,7 +10,7 @@
 		<Company>Janos Erdelyi</Company>
 		<Product>EmailValidation</Product>
 		<Description>Sanitize, Rank, and Validate email addresses</Description>
-		<Version>1.4.0</Version>
+		<Version>1.5.0</Version>
 		<AssemblyName>Validation</AssemblyName>
 		<RootNamespace>com.janoserdelyi.EmailValidation</RootNamespace>
 		<!-- for packaging -->

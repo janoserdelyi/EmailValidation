@@ -1,9 +1,7 @@
 namespace com.janoserdelyi.EmailValidation;
 
 using System;
-using System.Runtime.CompilerServices;
 using com.janoserdelyi.Validation;
-using Microsoft.VisualBasic;
 
 // i want to test something like
 
