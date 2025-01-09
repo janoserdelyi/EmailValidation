@@ -125,6 +125,17 @@ public class Email {
 			return false;
 		}
 
+		// https://www.ietf.org/rfc/rfc5322.txt pages 11 and 13 discussing atoms and quoted strings
+		// the long and the short is there may not be multiple dots in a row
+		if (email.Address.Contains ("..")) {
+			return false;
+		}
+
+		// also, the end of the email address/tld should not end in a dot
+		if (email.Address.EndsWith ('.')) {
+			return false;
+		}
+
 		return true;
 	}
 
