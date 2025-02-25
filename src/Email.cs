@@ -7,7 +7,7 @@ using com.janoserdelyi.Validation;
 
 // var email = new Email("foo@bar.com").Lower().Trim().CheckFormat().Score().CheckMx();
 
-public class Email {
+public partial class Email {
 	public Email () {
 
 	}
@@ -156,19 +156,24 @@ public class Email {
 		};
 	}
 
+	[System.Text.RegularExpressions.GeneratedRegex (@"[^\p{Lu}\p{Ll}{0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+")]
+	private static partial System.Text.RegularExpressions.Regex LocalPartRegex ();
+
 	public static bool LocalPartIsValid (
 		string local
 	) {
 		if (string.IsNullOrEmpty (local)) {
 			return false;
 		}
-		// testing if the local part contains only valid chars
-		const string pattern = @"[^a-zA-Z0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+";
-		//const string local = "123abc.!#$%&'*+-/=?^_`{|}~,";
-		//Console.WriteLine(System.Text.RegularExpressions.Regex.IsMatch(local, pattern));
 
-		// technically i should also be checking that there are no consecutive dots 
-		return !System.Text.RegularExpressions.Regex.IsMatch (local, pattern); // returning the inverse. this is checking that the local has something other that what the pattern lays out
+		local = local.Normalize ();
+
+		//i really need to re-evaluate this in light of unicode
+		// https://learn.microsoft.com/en-us/dotnet/standard/base-types/character-classes-in-regular-expressions#SupportedUnicodeGeneralCategories
+		// const string pattern = @"[^\p{Lu}\p{Ll}{0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+";
+
+		// technically i should also be checking that there are no consecutive dots
+		return !LocalPartRegex ().IsMatch (local); // returning the inverse. this is checking that the local has something other that what the pattern lays out
 	}
 
 
