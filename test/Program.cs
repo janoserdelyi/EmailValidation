@@ -189,11 +189,13 @@ using Xunit;
 //}
 
 
-public class Program
-{
+public class Program {
 	public static void Main (
 	//string[] args
 	) {
+
+		var localpartUnicode = Email.Validator ("jános@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
+		var localpartASCII = Email.Validator ("janos@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
 
 		var tempServiceExample = Email.Validator ("a@losemymail.com").ValidateFormat ().Parse ().DisallowTemporaryServiceDomains (
 			new TemporaryServiceConfig (

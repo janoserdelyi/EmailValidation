@@ -156,7 +156,7 @@ public partial class Email {
 		};
 	}
 
-	[System.Text.RegularExpressions.GeneratedRegex (@"[^\p{Lu}\p{Ll}{0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+")]
+	[System.Text.RegularExpressions.GeneratedRegex (@"[^\p{Lu}\p{Ll}0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+")]
 	private static partial System.Text.RegularExpressions.Regex LocalPartRegex ();
 
 	public static bool LocalPartIsValid (
