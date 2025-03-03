@@ -519,6 +519,9 @@ public static class EmailValidationExtensions {
 
 			// put into a dictionary for faster lookups
 			foreach (string line in lines) {
+				if (cachedTempDomains.ContainsKey (line.ToLower ())) {
+					continue;
+				}
 				cachedTempDomains.Add (line.ToLower (), null);
 			}
 
