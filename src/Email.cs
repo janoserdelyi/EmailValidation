@@ -134,6 +134,15 @@ public partial class Email {
 			return false;
 		}
 
+		// if an email starts with a period, it is invalid
+		if (email.Address.StartsWith ('.')) {
+			return false;
+		}
+
+		if (System.Text.RegularExpressions.Regex.IsMatch (email.Address, @"\w\s+\w")) {
+			return false;
+		}
+
 		return true;
 	}
 

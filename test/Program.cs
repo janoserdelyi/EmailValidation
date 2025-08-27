@@ -194,6 +194,12 @@ public class Program {
 	//string[] args
 	) {
 
+		// periods at start/end
+		var periodStart = Email.Validator (".janos@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
+		var periodEnd = Email.Validator ("janos@janoserdelyi.com.").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
+		// space within email address
+		var spaceWithin = Email.Validator ("janos@janos erdelyi.com.").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
+
 		var localpartUnicode = Email.Validator ("jános@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
 		var localpartASCII = Email.Validator ("janos@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
 
