@@ -267,6 +267,10 @@ public static class EmailValidationExtensions {
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No local part provided, cannot validate");
 		}
 
+		if (result.Value.LocalPart.EndsWith ('.')) {
+			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, "Invalid email format - local part");
+		}
+
 		var isvalid = Email.LocalPartIsValid (result.Value.LocalPart);
 
 		if (isvalid == false) {
