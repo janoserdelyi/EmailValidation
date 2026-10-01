@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFrameworks>net10.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -32,7 +32,7 @@
 	<ItemGroup>
 		<!-- <ProjectReference Include="../../Validation/src/Validation.csproj"/> -->
 		<!-- <ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/> -->
-		<PackageReference Include="com.janoserdelyi.Validation" Version="1.0.4"/>
-		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.3.0"/>
+		<PackageReference Include="com.janoserdelyi.Validation" Version="1.1.0"/>
+		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.4.0"/>
 	</ItemGroup>
 </Project>

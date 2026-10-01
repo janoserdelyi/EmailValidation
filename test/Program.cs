@@ -1,10 +1,7 @@
-﻿namespace Test;
-
-using System.Runtime.CompilerServices;
-using com.janoserdelyi.EmailValidation;
+﻿using com.janoserdelyi.EmailValidation;
 using com.janoserdelyi.Validation;
-using MailVerifier;
-using Xunit;
+
+namespace Test;
 
 // public class EmailValidationTest
 // {
@@ -68,7 +65,6 @@ using Xunit;
 // 		Assert.True (val.Value?.LocalPart == "a", $"'{value}' parsed localpart successfully");
 // 		Assert.True (val.Value?.Domain == "b.c", $"'{value}' parsed domain successfully");
 // 	}
-
 
 // 	[Theory]
 // 	[InlineData ("a@b.edu")]
@@ -188,8 +184,8 @@ using Xunit;
 // 	}
 //}
 
-
-public class Program {
+public class Program
+{
 	public static void Main (
 	//string[] args
 	) {
@@ -224,7 +220,7 @@ public class Program {
 			.Trim ()
 			// this is how you can inject any custom checks anywhere in the pipeline. the checks just need to return a boolean for success/fail
 			.Ensure (
-				e => Email.IsLongEnough (e.Address, 5),
+				e => Email.IsLongEnough (e?.Address, 5),
 				(int)Error.TooShort,
 				"Invalid format - email is too short to be real"
 			)
@@ -251,7 +247,7 @@ public class Program {
 			.CommonTypos ()
 			.Rank ();
 
-		if (interrupted.IsSuccess == true && interrupted.Value.StaticRank > 0) {
+		if (interrupted.IsSuccess == true && interrupted.Value?.StaticRank > 0) {
 			interrupted = interrupted.VerifyMxRecords ().Result;
 		}
 
@@ -260,7 +256,7 @@ public class Program {
 		var bundled = Email.FullValidation (" FOOB@messytheface.com ").DisallowTld ("edu").DisallowTld ("com");
 
 		if (bundled.IsSuccess == true) {
-			Console.WriteLine ($"{bundled.Value.Address} rank : {bundled.Value.StaticRank}");
+			Console.WriteLine ($"{bundled.Value?.Address} rank : {bundled.Value?.StaticRank}");
 		} else {
 			Console.WriteLine ($"failure : {bundled.ErrorMessage}");
 		}

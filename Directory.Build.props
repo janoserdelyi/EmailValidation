@@ -1,0 +1,13 @@
+<Project>
+	<PropertyGroup>
+		<!--
+		Enable IDE-style analyzers during dotnet build (not just in the IDE).
+		This makes rules like IDE0055 (formatting), IDE0011 (braces), IDE1006 (naming)
+		actually fail the build when they are set to error/warning in .editorconfig.
+		-->
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<AnalysisMode>Recommended</AnalysisMode>
+		<NoWarn>$(NoWarn);EnableGenerateDocumentationFile</NoWarn>
+	</PropertyGroup>
+</Project>

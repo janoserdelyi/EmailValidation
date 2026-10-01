@@ -1,12 +1,9 @@
-
-using System.Linq;
-
 namespace com.janoserdelyi.EmailValidation;
 
 // 2017-11-16 first stab! not sure what i'm doing yet...
 public class Ranker : IRanker
 {
-	// general ideas - 
+	// general ideas -
 	//	high numbers are bad
 	//	exit after 10 is reached to exit early
 
@@ -26,16 +23,19 @@ public class Ranker : IRanker
 			resp.AddReason ("null/empty email");
 			return resp;
 		}
+
 		if (!email.Contains ('@')) {
 			resp.Rank = MAX;
 			resp.AddReason ("no @");
 			return resp;
 		}
+
 		if (!email.Contains ('.')) {
 			resp.Rank = MAX;
 			resp.AddReason ("no .");
 			return resp;
 		}
+
 		if (!email.Split ('@')[1].Contains ('.')) {
 			resp.Rank = MAX;
 			resp.AddReason ("no . in the domain");
@@ -43,8 +43,8 @@ public class Ranker : IRanker
 		}
 
 		// let's break out the parts
-		string local = email.Split ('@')[0].ToLower ();
-		string domain = email.Split ('@')[1].ToLower ();
+		string local = email.Split ('@')[0].ToLowerInvariant ();
+		string domain = email.Split ('@')[1].ToLowerInvariant ();
 
 		if (!EmailLocalIsValid (local)) {
 			resp.Rank = MAX;
@@ -52,7 +52,7 @@ public class Ranker : IRanker
 			return resp;
 		}
 
-		if (domain.IndexOf ("hardbounce") > -1) {
+		if (domain.IndexOf ("hardbounce", StringComparison.InvariantCulture) > -1) {
 			resp.Rank = MAX;
 			resp.AddReason ("domain contains hardbounce");
 			return resp;
@@ -71,9 +71,10 @@ public class Ranker : IRanker
 			resp.AddReason ("more than 7 numbers in local");
 			resp.Rank++;
 		}
+
 		if (justnumbers.Length > 14) {
 			resp.AddReason ("more than 14 numbers in local");
-			resp.Rank = resp.Rank + 2;
+			resp.Rank += 2;
 		}
 
 		// now for proportion
@@ -92,6 +93,7 @@ public class Ranker : IRanker
 			resp.AddReason ("local = test");
 			resp.Rank++;
 		}
+
 		if (local == "asdf") {
 			resp.AddReason ("local = asdf");
 			resp.Rank++;
@@ -134,7 +136,7 @@ public class Ranker : IRanker
 		}
 		// ===============================================
 
-		if (domain.StartsWith ("reply.")) {
+		if (domain.StartsWith ("reply.", StringComparison.InvariantCulture)) {
 			resp.AddReason ("domain starts with reply.");
 			resp.Rank += 7;
 		}
@@ -165,11 +167,12 @@ public class Ranker : IRanker
 		}
 
 		// i see emails for zillow and others start with "reply-". baaaad
-		if (local.StartsWith ("reply")) {
+		if (local.StartsWith ("reply", StringComparison.InvariantCulture)) {
 			resp.AddReason ("local starts with reply");
 			resp.Rank++;
 		}
-		if (local.StartsWith ("reply-")) {
+
+		if (local.StartsWith ("reply-", StringComparison.InvariantCulture)) {
 			resp.AddReason ("local starts with reply-");
 			resp.Rank++;
 		}
@@ -184,7 +187,7 @@ public class Ranker : IRanker
 		// it might be bad word time
 		HashSet<string> words = getBadWords ();
 		foreach (string word in words) {
-			if (local.IndexOf (word) > -1) {
+			if (local.IndexOf (word, StringComparison.InvariantCulture) > -1) {
 				resp.AddReason ("local contains trigger words");
 				resp.Rank += 2;
 				//break; // hrmmm. i should let it stack
@@ -202,13 +205,14 @@ public class Ranker : IRanker
 			return;
 		}
 
-		wordList!.ForEach (el => badwords.Add (el));
+		wordList!.ForEach (el => _badwords.Add (el));
 	}
 
 	public static string JustNumbers (string input) {
 		if (string.IsNullOrEmpty (input)) {
 			return input;
 		}
+
 		return System.Text.RegularExpressions.Regex.Replace (input, "[^\\d]+", "");
 	}
 
@@ -218,30 +222,31 @@ public class Ranker : IRanker
 			return false;
 		}
 		// testing if the local part contains only valid chars
-		const string pattern = @"[^a-zA-Z0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+";
+		const string PATTERN = @"[^a-zA-Z0-9\!\#\$\%\&'\*\+\-\/\=\?\^_\`\{\|\}\~\.]+";
 		//const string local = "123abc.!#$%&'*+-/=?^_`{|}~,";
 		//Console.WriteLine(System.Text.RegularExpressions.Regex.IsMatch(local, pattern));
 
-		bool isMatch = !System.Text.RegularExpressions.Regex.IsMatch (local, pattern);
+		bool isMatch = !System.Text.RegularExpressions.Regex.IsMatch (local, PATTERN);
 		if (!isMatch) {
 			return false;
 		}
 
 		// technically i should also be checking that there are no consecutive dots
 		// so let's do that. just looking for 2 in a row. this will catch 3,4,etc in a row. none are acceptable
-		return local.IndexOf ("..") == -1;
+		return !local.Contains ("..", StringComparison.InvariantCulture);
 	}
 
 	// this could obviously be expanded and likely some localization should be taken into account
 	private static HashSet<string> getBadWords () {
-		if (badwords.Count == 0) {
-			badwords.Add ("shit");
-			badwords.Add ("fuck");
-			badwords.Add ("asshole");
-			badwords.Add ("spam");
+		if (_badwords.Count == 0) {
+			_ = _badwords.Add ("shit");
+			_ = _badwords.Add ("fuck");
+			_ = _badwords.Add ("asshole");
+			_ = _badwords.Add ("spam");
 		}
-		return badwords;
+
+		return _badwords;
 	}
 
-	private static readonly HashSet<string> badwords = new ();
+	private static readonly HashSet<string> _badwords = new ();
 }

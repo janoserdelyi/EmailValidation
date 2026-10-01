@@ -18,4 +18,6 @@ public class TemporaryServiceConfig
 
 	public string ListUrl { get; set; }
 	public int CacheHours { get; set; }
+	public bool ForceRefresh { get; set; }
+	public System.Net.Http.HttpMessageHandler? HttpMessageHandler { get; set; }
 }

@@ -1,5 +1,6 @@
 bin/
 obj/
+/test/TestResults/
 Properties/
 sql/
 .vs/

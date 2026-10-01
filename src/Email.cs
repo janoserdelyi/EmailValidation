@@ -1,13 +1,13 @@
-namespace com.janoserdelyi.EmailValidation;
-
-using System;
 using com.janoserdelyi.Validation;
+
+namespace com.janoserdelyi.EmailValidation;
 
 // i want to test something like
 
 // var email = new Email("foo@bar.com").Lower().Trim().CheckFormat().Score().CheckMx();
 
-public partial class Email {
+public partial class Email
+{
 	public Email () {
 
 	}
@@ -21,9 +21,9 @@ public partial class Email {
 	public string? Address { get; set; }
 	public string? LocalPart { get; set; }
 	public string? Domain { get; set; }
-	public bool Parsed { get; set; } = false;
-	public bool ValidFormat { get; set; } = false;
-	public int StaticRank { get; set; } = 0; // the rank based just off the value of the email itself-  no network checks
+	public bool Parsed { get; set; }
+	public bool ValidFormat { get; set; }
+	public int StaticRank { get; set; }  // the rank based just off the value of the email itself-  no network checks
 
 	public override string? ToString () {
 		return Address;
@@ -57,19 +57,21 @@ public partial class Email {
 	) {
 		return Result<Email>.Evaluate<Email> (this)
 			.Ensure<Email> (
-				e => AddressIsNotEmpty (e.Address),
+				e => AddressIsNotEmpty (e?.Address),
 				(int)Error.Empty,
 				"No email address provided"
 			).Ensure (
-				e => IsLongEnough (e.Address, 5),
+				e => IsLongEnough (e?.Address, 5),
 				(int)Error.TooShort,
 				"Invalid format - email is too short to be real"
 			)
 			.Ensure (
 				e => IsValidFormat (e),
 				(int)Error.InvalidFormat,
-				$"Invalid format. This email '{this.Address}' can't be real"
-			).Map<Email, Email> (ParseParts);
+				$"Invalid format. This email '{Address}' can't be real"
+			).Map<Email, Email> (
+				email => ParseParts (email!) ?? throw new InvalidOperationException ("Validated email could not be parsed")
+			);
 	}
 
 	// core validations without abstraction
@@ -119,7 +121,7 @@ public partial class Email {
 			return false;
 		}
 
-		if (parts[1].IndexOf ('.') == -1) {
+		if (parts[1].Contains ('.') == false) {
 			return false;
 		}
 
@@ -159,7 +161,7 @@ public partial class Email {
 
 		// i'm assuming IsValidFormat has been run on this already
 		return new Email () {
-			Address = email.Address.ToLower ().Trim (),
+			Address = email.Address.ToLowerInvariant ().Trim (),
 			LocalPart = email.Address.Split ('@')[0],
 			Domain = email.Address.Split ('@')[1]
 		};
@@ -184,11 +186,10 @@ public partial class Email {
 		// technically i should also be checking that there are no consecutive dots
 		return !LocalPartRegex ().IsMatch (local); // returning the inverse. this is checking that the local has something other that what the pattern lays out
 	}
-
-
 }
 
-public static class EmailValidationExtensions {
+public static class EmailValidationExtensions
+{
 
 	public static Result<Email> ValidateFormat (
 		this Result<Email> result
@@ -297,14 +298,14 @@ public static class EmailValidationExtensions {
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No email provided, cannot lowercase");
 		}
 
-		result.Value.Address = result.Value.Address.ToLower ();
+		result.Value.Address = result.Value.Address.ToLowerInvariant ();
 
 		if (result.Value.LocalPart != null) {
-			result.Value.LocalPart = result.Value.LocalPart.ToLower ();
+			result.Value.LocalPart = result.Value.LocalPart.ToLowerInvariant ();
 		}
 
 		if (result.Value.Domain != null) {
-			result.Value.Domain = result.Value.Domain.ToLower ();
+			result.Value.Domain = result.Value.Domain.ToLowerInvariant ();
 		}
 
 		return Result<Email>.Success<Email> (result.Value);
@@ -398,10 +399,10 @@ public static class EmailValidationExtensions {
 			["hotnail.com"] = new TypoMatch ("hotnail.com", "hotmail.com")
 		};
 
-		if (typoMatches.ContainsKey (domain)) {
-			string msg = typoMatches[domain].ResponseTemplate
+		if (typoMatches.TryGetValue (domain, out TypoMatch? value)) {
+			string msg = value.ResponseTemplate
 				.Replace ("{typodomain}", domain)
-				.Replace ("{domain}", typoMatches[domain].CorrectDomain)
+				.Replace ("{domain}", value.CorrectDomain)
 				.Replace ("{local}", local);
 
 			return Result<Email>.Failure<Email> ((int)Error.InvalidFormat, msg);
@@ -430,12 +431,12 @@ public static class EmailValidationExtensions {
 		//string tld = result.Value.Domain.Substring (result.Value.Domain.LastIndexOf ('.') + 1);
 		//string tld = result.Value.Domain[(result.Value.Domain.LastIndexOf ('.') + 1)..];
 
-		tldToBlock = tldToBlock.ToLower ().Trim ();
+		tldToBlock = tldToBlock.ToLowerInvariant ().Trim ();
 
 		// reworking this to account for multi-segment tld's
 		// structurally i don't care do it, but it's up to the developer's discretion to use/abuse this
 
-		if (result.Value.Domain.EndsWith (tldToBlock)) {
+		if (result.Value.Domain.ToLowerInvariant ().EndsWith (tldToBlock, StringComparison.InvariantCulture)) {
 			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{tldToBlock}' is not an allowed TLD");
 		}
 
@@ -515,10 +516,12 @@ public static class EmailValidationExtensions {
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check against temporary services");
 		}
 
-		if (cachedTempDomains.Count == 0 || DateTime.Now > cacheTempDomainsUpdateDt) {
-			cachedTempDomains.Clear ();
+		if (config.ForceRefresh || _cachedTempDomains.Count == 0 || DateTime.Now > _cacheTempDomainsUpdateDt) {
+			_cachedTempDomains.Clear ();
 
-			var httpClient = new HttpClient ();
+			using var httpClient = config.HttpMessageHandler == null
+				? new HttpClient ()
+				: new HttpClient (config.HttpMessageHandler, false);
 			var request = new HttpRequestMessage (HttpMethod.Get, config.ListUrl);
 			var response = await httpClient.SendAsync (request);
 
@@ -528,27 +531,28 @@ public static class EmailValidationExtensions {
 
 			var content = await response.Content.ReadAsStringAsync ();
 
-			var lines = content.Split (lineSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			var lines = content.Split (_lineSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			// put into a dictionary for faster lookups
 			foreach (string line in lines) {
-				if (cachedTempDomains.ContainsKey (line.ToLower ())) {
+				if (_cachedTempDomains.ContainsKey (line.ToLowerInvariant ())) {
 					continue;
 				}
-				cachedTempDomains.Add (line.ToLower (), null);
+
+				_cachedTempDomains.Add (line.ToLowerInvariant (), null);
 			}
 
-			cacheTempDomainsUpdateDt = DateTime.Now.AddHours (config.CacheHours);
+			_cacheTempDomainsUpdateDt = DateTime.Now.AddHours (config.CacheHours);
 		}
 
-		if (cachedTempDomains.ContainsKey (result.Value.Domain)) {
+		if (_cachedTempDomains.ContainsKey (result.Value.Domain.ToLowerInvariant ())) {
 			return Result<Email>.Failure<Email> ((int)Error.NotAllowed, $"'{result.Value.Domain}' is not an allowed domain");
 		}
 
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
-	public static async Task<Result<Email>> DisallowTemporaryServiceDomains (
+	public static Result<Email> DisallowTemporaryServiceDomains (
 	  this Result<Email> result,
 	  List<string> temporaryDomains
 	) {
@@ -571,9 +575,9 @@ public static class EmailValidationExtensions {
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
-	private static readonly char[] lineSeparator = new[] { '\r', '\n' };
-	private static readonly Dictionary<string, string?> cachedTempDomains = new ();
-	private static DateTime cacheTempDomainsUpdateDt = new DateTime (1970, 1, 1);
+	private static readonly char[] _lineSeparator = new[] { '\r', '\n' };
+	private static readonly Dictionary<string, string?> _cachedTempDomains = new ();
+	private static DateTime _cacheTempDomainsUpdateDt = new (1970, 1, 1);
 
 	public static async Task<Result<Email>> VerifyMxRecords (
 		this Result<Email> result,
@@ -592,10 +596,11 @@ public static class EmailValidationExtensions {
 		}
 
 		if (config == null) {
-			foreach (string dnsserver in defaultDnsServers) {
+			foreach (string dnsserver in _defaultDnsServers) {
 				MailVerifier.Verify.AddDns (dnsserver);
 			}
-			foreach (string bypassdomain in defaultBypassDomains) {
+
+			foreach (string bypassdomain in _defaultBypassDomains) {
 				MailVerifier.Verify.AddBypassDomain (bypassdomain);
 			}
 		} else {
@@ -604,7 +609,7 @@ public static class EmailValidationExtensions {
 					MailVerifier.Verify.AddDns (dnsserver);
 				}
 			} else {
-				foreach (string dnsserver in defaultDnsServers) {
+				foreach (string dnsserver in _defaultDnsServers) {
 					MailVerifier.Verify.AddDns (dnsserver);
 				}
 			}
@@ -614,7 +619,7 @@ public static class EmailValidationExtensions {
 					MailVerifier.Verify.AddBypassDomain (bypassdomain);
 				}
 			} else {
-				foreach (string bypassdomain in defaultBypassDomains) {
+				foreach (string bypassdomain in _defaultBypassDomains) {
 					MailVerifier.Verify.AddBypassDomain (bypassdomain);
 				}
 			}
@@ -650,7 +655,7 @@ public static class EmailValidationExtensions {
 		return Result<Email>.Success<Email> (result.Value);
 	}
 
-	private static readonly System.Collections.Generic.IList<string> defaultDnsServers = new System.Collections.Generic.List<string> () { "208.67.222.222", "208.67.220.220", "1.1.1.1" };
-	private static readonly System.Collections.Generic.IList<string> defaultBypassDomains = new System.Collections.Generic.List<string> () { "messytheface.com", "gmail.com", "yahoo.com", "live.com", "outlook.com", "aol.com" };
+	private static readonly System.Collections.Generic.IList<string> _defaultDnsServers = new System.Collections.Generic.List<string> () { "208.67.222.222", "208.67.220.220", "1.1.1.1" };
+	private static readonly System.Collections.Generic.IList<string> _defaultBypassDomains = new System.Collections.Generic.List<string> () { "messytheface.com", "gmail.com", "yahoo.com", "live.com", "outlook.com", "aol.com" };
 
 }

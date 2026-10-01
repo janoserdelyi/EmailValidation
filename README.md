@@ -89,31 +89,31 @@ var result = Email.FullValidation("user@example.com");
 
 ### Core Methods
 
-| Method | Description |
-|--------|-------------|
-| `Validator(string)` | Initialize validation pipeline |
+| Method                   | Description                         |
+| ------------------------ | ----------------------------------- |
+| `Validator(string)`      | Initialize validation pipeline      |
 | `FullValidation(string)` | Complete validation with all checks |
-| `ValidateFormat()` | RFC-compliant format validation |
-| `Parse()` | Extract local and domain parts |
-| `Lower()` | Convert to lowercase |
-| `Trim()` | Remove leading/trailing whitespace |
-| `LocalIsValid()` | Validate local part rules |
-| `CommonTypos()` | Detect common typos |
-| `Rank()` | Calculate quality score |
+| `ValidateFormat()`       | RFC-compliant format validation     |
+| `Parse()`                | Extract local and domain parts      |
+| `Lower()`                | Convert to lowercase                |
+| `Trim()`                 | Remove leading/trailing whitespace  |
+| `LocalIsValid()`         | Validate local part rules           |
+| `CommonTypos()`          | Detect common typos                 |
+| `Rank()`                 | Calculate quality score             |
 
 ### Domain Management
 
-| Method | Description |
-|--------|-------------|
-| `DisallowTld(string)` | Block specific top-level domains |
-| `DisallowDomains(List<string>)` | Block specific domains (blocklist mode) |
-| `AllowDomains(List<string>)` | Allow only specific domains (allowlist mode) |
-| `DisallowTemporaryServiceDomains()` | Block disposable email services |
+| Method                              | Description                                  |
+| ----------------------------------- | -------------------------------------------- |
+| `DisallowTld(string)`               | Block specific top-level domains             |
+| `DisallowDomains(List<string>)`     | Block specific domains (blocklist mode)      |
+| `AllowDomains(List<string>)`        | Allow only specific domains (allowlist mode) |
+| `DisallowTemporaryServiceDomains()` | Block disposable email services              |
 
 ### Network Validation
 
-| Method | Description |
-|--------|-------------|
+| Method                       | Description                  |
+| ---------------------------- | ---------------------------- |
 | `VerifyMxRecords(MxConfig?)` | Verify domain has MX records |
 
 ### Custom Validation
@@ -168,7 +168,7 @@ public class Result<Email>
 {
     public bool IsSuccess { get; }
     public Email? Value { get; }         // Available when IsSuccess = true
-    public int ErrorCode { get; }        // Available when IsSuccess = false  
+    public int ErrorCode { get; }        // Available when IsSuccess = false
     public string ErrorMessage { get; }  // Available when IsSuccess = false
 }
 ```
@@ -219,7 +219,7 @@ public async Task<bool> ValidateRegistrationEmail(string email)
         .LocalIsValid()
         .DisallowTemporaryServiceDomains()
         .VerifyMxRecords();
-    
+
     return result.IsSuccess;
 }
 ```
@@ -236,21 +236,21 @@ public ValidationResult ValidateNewsletterEmail(string email)
         .Parse()
         .CommonTypos()
         .Rank();
-    
+
     if (result.IsSuccess)
     {
-        return new ValidationResult 
-        { 
-            IsValid = true, 
+        return new ValidationResult
+        {
+            IsValid = true,
             Email = result.Value.Address,
-            Quality = result.Value.StaticRank 
+            Quality = result.Value.StaticRank
         };
     }
-    
-    return new ValidationResult 
-    { 
-        IsValid = false, 
-        Error = result.ErrorMessage 
+
+    return new ValidationResult
+    {
+        IsValid = false,
+        Error = result.ErrorMessage
     };
 }
 ```
@@ -271,6 +271,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Changelog
 
 ### Version 1.5.3
+
 - Current stable release
 - Full .NET 8.0 support
 - Improved performance and error handling
