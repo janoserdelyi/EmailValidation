@@ -12,9 +12,10 @@ public class RankResponse
 		get {
 			// for now, this shouldn't be too horrible.
 			string r = "";
-			foreach (string reason in reasons) {
+			foreach (string reason in _reasons) {
 				r += reason + ",";
 			}
+
 			return r;
 		}
 	}
@@ -22,9 +23,9 @@ public class RankResponse
 	public void AddReason (
 		string reason
 	) {
-		reasons.Add (reason);
+		_reasons.Add (reason);
 	}
 
-	private readonly IList<string> reasons = new List<string> ();
+	private readonly List<string> _reasons = [];
 }
 

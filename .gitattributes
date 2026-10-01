@@ -1,0 +1,9 @@
+# Normalize text files to LF in-repo across platforms
+* text=auto eol=lf
+
+# Shell scripts must stay LF for Unix/Linux execution
+*.sh text eol=lf
+
+# Windows-native scripts should use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
