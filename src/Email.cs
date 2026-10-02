@@ -38,10 +38,11 @@ public partial class Email
 		return Result<Email>.Evaluate<Email> (email);
 	}
 
-	public static Result<Email> FullValidation (
-		string address
+	public static async Task<Result<Email>> FullValidationAsync (
+		string address,
+		CancellationToken cancellationToken = default
 	) {
-		return Validator (address)
+		return await Validator (address)
 			.ValidateFormat ()
 			.Parse ()
 			.Lower ()
@@ -49,7 +50,14 @@ public partial class Email
 			.LocalIsValid ()
 			.CommonTypos ()
 			.Rank ()
-			.VerifyMxRecords ().Result;
+			.VerifyMxRecords (cancellationToken: cancellationToken);
+	}
+
+	// this still exists for backwards compat. i know it's a i/o blocker potentially
+	public static Result<Email> FullValidation (
+		string address
+	) {
+		return FullValidationAsync (address).GetAwaiter ().GetResult ();
 	}
 
 	public Result<Email> Validate (
@@ -502,7 +510,8 @@ public static class EmailValidationExtensions
 	// download a list of temporary email service domains and block them. cache the list
 	public static async Task<Result<Email>> DisallowTemporaryServiceDomains (
 		this Result<Email> result,
-		TemporaryServiceConfig config
+		TemporaryServiceConfig config,
+		CancellationToken cancellationToken = default
 	) {
 		if (result.IsFailure == true) {
 			return result;
@@ -516,33 +525,38 @@ public static class EmailValidationExtensions
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot check against temporary services");
 		}
 
-		if (config.ForceRefresh || _cachedTempDomains.Count == 0 || DateTime.Now > _cacheTempDomainsUpdateDt) {
-			_cachedTempDomains.Clear ();
+		await _tempDomainCacheLock.WaitAsync (cancellationToken);
+		try {
+			if (config.ForceRefresh || _cachedTempDomains.Count == 0 || DateTime.Now > _cacheTempDomainsUpdateDt) {
+				_cachedTempDomains.Clear ();
 
-			using var httpClient = config.HttpMessageHandler == null
-				? new HttpClient ()
-				: new HttpClient (config.HttpMessageHandler, false);
-			var request = new HttpRequestMessage (HttpMethod.Get, config.ListUrl);
-			var response = await httpClient.SendAsync (request);
+				var httpClient = config.HttpMessageHandler == null
+					? _defaultHttpClient
+					: new HttpClient (config.HttpMessageHandler, false);
+				var request = new HttpRequestMessage (HttpMethod.Get, config.ListUrl);
+				var response = await httpClient.SendAsync (request, cancellationToken);
 
-			if (response.IsSuccessStatusCode == false) {
-				return Result<Email>.Failure<Email> ((int)Error.Empty, $"Unable to load temporary services list - {response.StatusCode} : {response.ReasonPhrase}");
-			}
-
-			var content = await response.Content.ReadAsStringAsync ();
-
-			var lines = content.Split (_lineSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-			// put into a dictionary for faster lookups
-			foreach (string line in lines) {
-				if (_cachedTempDomains.ContainsKey (line.ToLowerInvariant ())) {
-					continue;
+				if (response.IsSuccessStatusCode == false) {
+					return Result<Email>.Failure<Email> ((int)Error.Empty, $"Unable to load temporary services list - {response.StatusCode} : {response.ReasonPhrase}");
 				}
 
-				_cachedTempDomains.Add (line.ToLowerInvariant (), null);
-			}
+				var content = await response.Content.ReadAsStringAsync (cancellationToken);
 
-			_cacheTempDomainsUpdateDt = DateTime.Now.AddHours (config.CacheHours);
+				var lines = content.Split (_lineSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+				foreach (string line in lines) {
+					if (_cachedTempDomains.ContainsKey (line.ToLowerInvariant ())) {
+						continue;
+					}
+
+					_cachedTempDomains.Add (line.ToLowerInvariant (), null);
+				}
+
+				_cacheTempDomainsUpdateDt = DateTime.Now.AddHours (config.CacheHours);
+			}
+		}
+		finally {
+			_tempDomainCacheLock.Release ();
 		}
 
 		if (_cachedTempDomains.ContainsKey (result.Value.Domain.ToLowerInvariant ())) {
@@ -578,10 +592,13 @@ public static class EmailValidationExtensions
 	private static readonly char[] _lineSeparator = new[] { '\r', '\n' };
 	private static readonly Dictionary<string, string?> _cachedTempDomains = new ();
 	private static DateTime _cacheTempDomainsUpdateDt = new (1970, 1, 1);
+	private static readonly SemaphoreSlim _tempDomainCacheLock = new (1, 1);
+	private static readonly HttpClient _defaultHttpClient = new () { Timeout = TimeSpan.FromSeconds (30) };
 
 	public static async Task<Result<Email>> VerifyMxRecords (
 		this Result<Email> result,
-		MxConfig? config = null
+		MxConfig? config = null,
+		CancellationToken cancellationToken = default
 	) {
 		if (result.IsFailure == true) {
 			return result;
@@ -627,7 +644,7 @@ public static class EmailValidationExtensions
 
 		MailVerifier.Response r;
 		try {
-			r = await MailVerifier.Verify.Check (result.Value.Address);
+			r = await MailVerifier.Verify.Check (result.Value.Address).WaitAsync (cancellationToken);
 		} catch (System.ArgumentNullException oops) {
 			r = new MailVerifier.Response {
 				Success = false,
