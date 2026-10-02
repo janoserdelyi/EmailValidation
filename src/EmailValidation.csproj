@@ -10,13 +10,11 @@
 		<Company>Janos Erdelyi</Company>
 		<Product>EmailValidation</Product>
 		<Description>Sanitize, Rank, and Validate email addresses</Description>
-		<Version>1.6.0</Version>
+		<Version>1.7.0</Version>
 		<AssemblyName>Validation</AssemblyName>
 		<RootNamespace>com.janoserdelyi.EmailValidation</RootNamespace>
 		<!-- for packaging -->
 		<EnablePackageValidation>true</EnablePackageValidation>
-    	<!-- Optional: Detect breaking changes from a previous stable version -->
-    	<!-- <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion> -->
 		<!-- automatically generate package on build -->
 		<!-- <GeneratePackageOnBuild>true</GeneratePackageOnBuild> -->
 		<!-- <PackageLicenseExpression>AGPL</PackageLicenseExpression> -->
@@ -30,9 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- <ProjectReference Include="../../Validation/src/Validation.csproj"/> -->
-		<!-- <ProjectReference Include="../../MailVerifier.standard/src/MailVerifier.standard.csproj"/> -->
 		<PackageReference Include="com.janoserdelyi.Validation" Version="1.1.0"/>
-		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.4.0"/>
+		<PackageReference Include="com.janoserdelyi.MailVerifier" Version="0.6.0"/>
 	</ItemGroup>
 </Project>
