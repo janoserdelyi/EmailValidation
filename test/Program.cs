@@ -189,6 +189,22 @@ public class Program
 	public static void Main (
 	//string[] args
 	) {
+		// real test of ValidationManager
+		var validationManager = new ValidationManager (new ValidationManagerOptions {
+			DnsServers = ["1.1.1.1", "8.8.8.8"],
+			BypassDomains = ["gmail.com", "yahoo.com"],
+			DisallowedDomains = ["test.com", "example.com"],
+			TypoMatches = new Dictionary<string, TypoMatch> {
+				["gmial.com"] = new TypoMatch ("gmial.com", "gmail.com")
+			},
+			TemporaryServiceConfig = new TemporaryServiceConfig (
+				"https://raw.githubusercontent.com/disposable/disposable-email-domains/master/domains.txt",
+				24
+			),
+			EmailDomainRepo = new InMemoryEmailDomainRepo (),
+			Logger = Console.WriteLine
+		});
+		var validationResult = validationManager.ValidateEmailAsync ("janos@janoserdelyi.com").Result;
 
 		// periods at start/end
 		var periodStart = Email.Validator (".janos@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
@@ -263,5 +279,21 @@ public class Program
 
 		Console.WriteLine ("done");
 
+	}
+
+	private sealed class InMemoryEmailDomainRepo : IEmailDomainRepo
+	{
+		public Task<IEnumerable<EmailDomainDto>?> SelectGoodDomains (CancellationToken cancellationToken = default) {
+			return Task.FromResult<IEnumerable<EmailDomainDto>?> ([]);
+		}
+
+		public Task<IEnumerable<EmailDomainDto>?> SelectBadDomains (CancellationToken cancellationToken = default) {
+			return Task.FromResult<IEnumerable<EmailDomainDto>?> ([]);
+		}
+
+		public Task Upsert (EmailDomainDto domain, CancellationToken cancellationToken = default) {
+			Console.WriteLine ($"upsert: {domain.Domain} good={domain.IsGood}");
+			return Task.CompletedTask;
+		}
 	}
 }
