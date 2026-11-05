@@ -612,58 +612,56 @@ public static class EmailValidationExtensions
 			return Result<Email>.Failure<Email> ((int)Error.Empty, "No domain parsed from email, cannot verify MX records");
 		}
 
-		if (config == null) {
+		config ??= new MxConfig {
+			// add default values
+			DnsServers = [.. _defaultDnsServers],
+			BypassDomains = [.. _defaultBypassDomains]
+		};
+
+		if (config.DnsServers.Count > 0) {
+			foreach (string dnsserver in config.DnsServers) {
+				MailVerifier.Verify.AddDns (dnsserver);
+			}
+		} else {
 			foreach (string dnsserver in _defaultDnsServers) {
 				MailVerifier.Verify.AddDns (dnsserver);
 			}
+		}
 
-			foreach (string bypassdomain in _defaultBypassDomains) {
+		if (config.BypassDomains.Count > 0) {
+			foreach (string bypassdomain in config.BypassDomains) {
 				MailVerifier.Verify.AddBypassDomain (bypassdomain);
 			}
 		} else {
-			if (config.DnsServers.Count > 0) {
-				foreach (string dnsserver in config.DnsServers) {
-					MailVerifier.Verify.AddDns (dnsserver);
-				}
-			} else {
-				foreach (string dnsserver in _defaultDnsServers) {
-					MailVerifier.Verify.AddDns (dnsserver);
-				}
-			}
-
-			if (config.BypassDomains.Count > 0) {
-				foreach (string bypassdomain in config.BypassDomains) {
-					MailVerifier.Verify.AddBypassDomain (bypassdomain);
-				}
-			} else {
-				foreach (string bypassdomain in _defaultBypassDomains) {
-					MailVerifier.Verify.AddBypassDomain (bypassdomain);
-				}
+			foreach (string bypassdomain in _defaultBypassDomains) {
+				MailVerifier.Verify.AddBypassDomain (bypassdomain);
 			}
 		}
 
-		MailVerifier.Response r;
-		try {
-			r = await MailVerifier.Verify.Check (result.Value.Address).WaitAsync (cancellationToken);
-		} catch (System.ArgumentNullException oops) {
-			r = new MailVerifier.Response {
-				Success = false,
-				Message = oops.Message
-			};
-		} catch (System.ArgumentException oops) {
-			r = new MailVerifier.Response {
-				Success = false,
-				Message = oops.Message
-			};
-		} catch (Exception oops) {
-			r = new MailVerifier.Response {
-				Success = false,
-				Message = "Unknown exception. Record not added. " + oops.Message
-			};
-		}
+		if (config.DoSocketCheck) {
+			MailVerifier.Response r;
+			try {
+				r = await MailVerifier.Verify.Check (result.Value.Address).WaitAsync (cancellationToken);
+			} catch (System.ArgumentNullException oops) {
+				r = new MailVerifier.Response {
+					Success = false,
+					Message = oops.Message
+				};
+			} catch (System.ArgumentException oops) {
+				r = new MailVerifier.Response {
+					Success = false,
+					Message = oops.Message
+				};
+			} catch (Exception oops) {
+				r = new MailVerifier.Response {
+					Success = false,
+					Message = "Unknown exception. Record not added. " + oops.Message
+				};
+			}
 
-		if (r.Success == false) {
-			return Result<Email>.Failure<Email> ((int)Error.Empty, r.Message);
+			if (r.Success == false) {
+				return Result<Email>.Failure<Email> ((int)Error.Empty, r.Message);
+			}
 		}
 
 		// adding this domain as a bypass domain for subsequent checks

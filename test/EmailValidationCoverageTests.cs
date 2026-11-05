@@ -310,6 +310,30 @@ public class EmailValidationCoverageTests
 	}
 
 	[Fact]
+	public async Task MxVerificationDoSocketCheckFalseSkipsSocketCheck () {
+		// default is true
+		Assert.True (new MxConfig ().DoSocketCheck);
+
+		// DoSocketCheck = false bypasses the socket check entirely, so a domain not in any bypass list still succeeds
+		Email noSocket = new ("user@nonexistent-domain.test") { Domain = "nonexistent-domain.test" };
+		Assert.True ((await success (noSocket).VerifyMxRecords (new MxConfig {
+			DnsServers = ["127.0.0.1"],
+			BypassDomains = [],
+			DoSocketCheck = false
+		})).IsSuccess);
+
+		// DoSocketCheck = true (explicit) uses the socket check; bypass domain still passes through
+		Email bypassed = new ("user@gmail.com") { Domain = "gmail.com" };
+		Assert.True ((await success (bypassed).VerifyMxRecords (new MxConfig {
+			DnsServers = [.. _defaultDnsServers],
+			BypassDomains = ["gmail.com"],
+			DoSocketCheck = true
+		})).IsSuccess);
+	}
+
+	private static readonly System.Collections.Generic.IList<string> _defaultDnsServers = ["208.67.222.222", "208.67.220.220", "1.1.1.1"];
+
+	[Fact]
 	public void FullValidationRunsTheEntireSuccessfulAndFailurePipelines () {
 		Result<Email> valid = Email.FullValidation ("User@gmail.com");
 		Assert.True (valid.IsSuccess);

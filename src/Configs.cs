@@ -2,8 +2,9 @@ namespace com.janoserdelyi.EmailValidation;
 
 public class MxConfig
 {
-	public System.Collections.Generic.IList<string> DnsServers { get; set; } = new System.Collections.Generic.List<string> ();
-	public System.Collections.Generic.IList<string> BypassDomains { get; set; } = new System.Collections.Generic.List<string> ();
+	public System.Collections.Generic.IList<string> DnsServers { get; set; } = [];
+	public System.Collections.Generic.IList<string> BypassDomains { get; set; } = [];
+	public bool DoSocketCheck { get; set; } = true; // whether or not to perform a socket check for MX records to ensure there is a listening mail server
 }
 
 public class TemporaryServiceConfig
