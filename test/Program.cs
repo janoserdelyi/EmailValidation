@@ -206,6 +206,7 @@ public class Program
 		});
 		var validationResult = validationManager.ValidateEmailAsync ("janos@janoserdelyi.com").Result;
 
+
 		// periods at start/end
 		var periodStart = Email.Validator (".janos@janoserdelyi.com").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
 		var periodEnd = Email.Validator ("janos@janoserdelyi.com.").Lower ().Trim ().ValidateFormat ().Parse ().LocalIsValid ();
